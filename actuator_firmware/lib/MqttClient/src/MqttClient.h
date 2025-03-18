@@ -23,7 +23,7 @@ private:
     };
     TopicHandler topicHandlers[MQTT_MAX_TOPICS];
     uint8_t handlerCount;
-    StaticJsonDocument<MQTT_DEFAULT_BUFFER_SIZE> jsonDoc;  // Pre-allocated JSON buffer
+    JsonDocument jsonDoc;
     char* mqttUser;  // Optional username
     char* mqttPass;  // Optional password
     bool reconnect();

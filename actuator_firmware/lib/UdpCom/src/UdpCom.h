@@ -15,7 +15,7 @@ private:
     
     char packetBuffer[UDP_MAX_PACKET_SIZE];
     char lastError[64];
-    void (*onPacketCallback)(const char *data, size_t length);
+    void (*onPacketCallback)(const char *data, size_t length, IPAddress remoteIP, uint16_t remotePort);
 
     void setLastError(const char *error);
 
@@ -28,9 +28,11 @@ public:
     bool sendPacket(const char *ip, uint16_t port, const char *data, size_t length);
     void receivePackets();
 
-    void setPacketCallback(void (*callback)(const char *data, size_t length));
+    void setPacketCallback(void (*callback)(const char *data, size_t length, IPAddress remoteIP, uint16_t remotePort));
 
     const char *getLastError() const;
+
+    const uint16_t getLocalPort() const;
 };
 
 #endif

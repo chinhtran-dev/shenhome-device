@@ -46,7 +46,7 @@ void UdpCom::receivePackets() {
         if (len > 0) {
             packetBuffer[len] = '\0';  // Null-terminate
             if (onPacketCallback) {
-                onPacketCallback(packetBuffer, len);
+                onPacketCallback(packetBuffer, len, udp.remoteIP(), udp.remotePort());
             }
         } else {
             setLastError("Failed to read packet");
@@ -54,7 +54,7 @@ void UdpCom::receivePackets() {
     }
 }
 
-void UdpCom::setPacketCallback(void (*callback)(const char *data, size_t length)) {
+void UdpCom::setPacketCallback(void (*callback)(const char *data, size_t length, IPAddress remoteIP, uint16_t remotePort)) {
     onPacketCallback = callback;
 }
 
@@ -65,4 +65,8 @@ const char* UdpCom::getLastError() const {
 void UdpCom::setLastError(const char* error) {
     strncpy(lastError, error, sizeof(lastError));
     lastError[sizeof(lastError) - 1] = '\0';
+}
+
+const uint16_t UdpCom::getLocalPort() const {
+    return port;
 }
