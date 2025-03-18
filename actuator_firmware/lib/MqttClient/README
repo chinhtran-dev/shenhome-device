@@ -1,0 +1,196 @@
+# MqttClient Library
+
+**MQTT Client Library for ESP8266**
+
+This library provides a lightweight MQTT client for ESP8266 devices, built on `PubSubClient` and `ArduinoJson`. It supports JSON and raw message handling with a callback-based system, automatic reconnection, and error reporting, optimized for the Arduino framework on ESP8266.
+
+- **Version**: 1.0.0
+- **Platform**: ESP8266 (espressif8266)
+- **Framework**: Arduino
+
+## Features
+- Simple MQTT setup with optional username/password authentication
+- Dual callback support: JSON (`JsonDocument`) and raw (`byte*`) messages
+- Automatic reconnection to the MQTT broker
+- Retained message publishing (QoS 0 only)
+- Fixed memory usage with a static JSON buffer (256 bytes by default)
+- Error reporting via `getLastError()`
+- Limited to 10 topic subscriptions for memory efficiency
+
+## Installation
+
+### Using PlatformIO
+1. Add the library to your `platformio.ini`:
+   ```ini
+   [env:esp8266]
+   platform = espressif8266
+   board = nodemcu
+   framework = arduino
+   lib_deps =
+       MqttClient
+   ```
+2. PlatformIO will install the library and its dependencies.
+
+### Manual Installation
+1. Copy the `MqttClient` folder to your project’s `lib/` directory.
+2. Ensure dependencies (`PubSubClient`, `ArduinoJson`) are installed in `lib/`.
+3. Include the library:
+   ```cpp
+   #include <MqttClient.h>
+   ```
+
+## Dependencies
+- [PubSubClient](https://github.com/knolleary/pubsubclient) (^2.8) - MQTT communication
+- [ArduinoJson](https://github.com/bblanchon/ArduinoJson) (^7.1.0) - JSON parsing
+- [NTPClient](https://github.com/arduino-libraries/NTPClient) (^3.2.1) - Optional, not used directly
+
+## Usage
+
+### Example Sketch
+Here’s an example showing how to connect to an MQTT broker, subscribe to topics with JSON and raw callbacks, and publish a message:
+
+```cpp
+#include <ESP8266WiFi.h>
+#include <MqttClient.h>
+
+// WiFi credentials
+const char* ssid = "your-ssid";
+const char* password = "your-password";
+
+// MQTT broker details
+const char* mqttServer = "broker.example.com";
+const uint16_t mqttPort = 1883;
+const char* mqttUser = "your-username";  // Optional
+const char* mqttPass = "your-password";  // Optional
+
+WiFiClient espClient;
+MQTTClient mqtt(espClient);
+
+void setup() {
+    Serial.begin(115200);
+
+    // Connect to WiFi
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+    Serial.println("\nConnected to WiFi");
+
+    // Setup MQTT client
+    if (mqtt.setup(mqttServer, mqttPort, mqttUser, mqttPass)) {
+        Serial.println("MQTT client initialized");
+    } else {
+        Serial.println("Setup failed: " + String(mqtt.getLastError()));
+    }
+
+    // JSON callback
+    mqtt.onJsonMessage("test/json", [](const JsonDocument& doc) {
+        if (doc.containsKey("message")) {
+            Serial.println("JSON message: " + String(doc["message"].as<const char*>()));
+        }
+    });
+
+    // Raw callback
+    mqtt.onRawMessage("test/raw", [](const char* topic, const byte* payload, unsigned int length) {
+        Serial.print("Raw message on ");
+        Serial.print(topic);
+        Serial.print(": ");
+        Serial.write(payload, length);
+        Serial.println();
+    });
+
+    // Publish a message
+    if (mqtt.publishMessage("test/json", "{\"message\": \"Hello from ESP8266\"}", true)) {
+        Serial.println("Message published");
+    } else {
+        Serial.println("Publish failed: " + String(mqtt.getLastError()));
+    }
+}
+
+void loop() {
+    mqtt.loop();
+    if (!mqtt.isConnected()) {
+        Serial.println("Disconnected: " + String(mqtt.getLastError()));
+        delay(1000);
+    }
+}
+```
+
+### API Reference
+
+- **`MQTTClient(WiFiClient& espClient)`**  
+  Constructor. Takes a `WiFiClient` reference for network communication.
+
+- **`bool setup(const char* host, uint16_t port, const char* user = nullptr, const char* pass = nullptr)`**  
+  Initializes the MQTT client with broker host, port, and optional credentials. Returns `true` on success.
+
+- **`void loop()`**  
+  Maintains the MQTT connection and processes messages. Call this in your main loop.
+
+- **`bool onJsonMessage(const char* topic, JsonCallback callback)`**  
+  Subscribes to a topic with a JSON callback. The callback receives a `JsonDocument`. Returns `false` if the topic limit (10) is reached.  
+  - `callback`: `std::function<void(const JsonDocument&)>`.
+
+- **`bool onRawMessage(const char* topic, RawCallback callback)`**  
+  Subscribes to a topic with a raw callback. The callback receives topic, payload, and length. Returns `false` if the topic limit is reached.  
+  - `callback`: `std::function<void(const char*, const byte*, unsigned int)>`.
+
+- **`bool publishMessage(const char* topic, const char* payload, bool retained = false, uint8_t qos = 0)`**  
+  Publishes a message to a topic. Supports retained messages (QoS is included but currently ignored due to `PubSubClient` limitations). Returns `true` on success.
+
+- **`bool isConnected()`**  
+  Returns `true` if connected to the MQTT broker.
+
+- **`const char* getLastError()`**  
+  Returns the last error message (e.g., "Not connected", "JSON parse error").
+
+## Project Structure
+```
+|--lib
+|  |--MqttClient
+|     |--src
+|     |  |- MqttClient.h    # Header file
+|     |  |- MqttClient.cpp  # Implementation
+|     |- library.json       # Library manifest
+|     |- README.md          # This file
+```
+
+## Configuration
+- **Max Topics**: Defined as `MQTT_MAX_TOPICS` (10). Edit `MqttClient.h` to change.
+- **JSON Buffer**: Fixed at `MQTT_DEFAULT_BUFFER_SIZE` (256 bytes). Adjust in `MqttClient.h` if needed (compile-time constant).
+- **Topic Length**: Limited to 32 characters per topic. Modify `TopicHandler::topic[32]` in `MqttClient.h` if longer topics are required.
+
+## Notes
+- **Memory Usage**: Uses a fixed-size array for topic handlers and a static JSON buffer to minimize heap fragmentation on ESP8266.
+- **QoS Limitation**: The `qos` parameter in `publishMessage()` is included but not functional due to `PubSubClient` constraints (QoS 0 only).
+- **JSON Payloads**: JSON callbacks assume valid JSON. Non-JSON messages trigger a parse error in `getLastError()`.
+- **Error Handling**: Check `getLastError()` after failed operations for details.
+
+## Building
+- Source files are in `src/`.
+- Compiler flags: `-Wall` (all warnings enabled) via `library.json`.
+
+## Contributing
+Modify the library in your project’s `lib/` folder. Suggestions for improvements (e.g., QoS support, dynamic buffers) are welcome!
+
+## License
+MIT License (or specify your preferred license).
+
+---
+
+### Notes on the README
+1. **Tailored to Implementation**:
+   - Reflects the fixed-size `StaticJsonDocument` (256 bytes) and topic limit (10).
+   - Mentions the QoS limitation honestly, as it’s in the API but not functional.
+   - Includes both JSON and raw callback examples.
+
+2. **Configuration Section**:
+   - Highlights compile-time constants users can tweak (`MQTT_MAX_TOPICS`, `MQTT_DEFAULT_BUFFER_SIZE`, topic length).
+
+3. **Usage Example**:
+   - Shows error handling with `getLastError()` and both callback types.
+   - Uses realistic MQTT setup with optional authentication.
+
+4. **Assumptions**:
+   - Assumes MIT License (common default); change if you prefer another.
