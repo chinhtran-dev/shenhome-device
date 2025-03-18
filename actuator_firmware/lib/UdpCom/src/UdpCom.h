@@ -24,6 +24,7 @@ public:
     ~UdpCom();
 
     bool begin();
+    void stop();
 
     bool sendPacket(const char *ip, uint16_t port, const char *data, size_t length);
     void receivePackets();

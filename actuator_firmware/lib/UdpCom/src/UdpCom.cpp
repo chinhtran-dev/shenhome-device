@@ -18,6 +18,10 @@ bool UdpCom::begin() {
     return true;
 }
 
+void UdpCom::stop() {
+    udp.stop();
+}
+
 bool UdpCom::sendPacket(const char *ip, uint16_t port, const char *data, size_t length) {
     if (length >= UDP_MAX_PACKET_SIZE) {
         setLastError("Packet size exceeds maximum");
