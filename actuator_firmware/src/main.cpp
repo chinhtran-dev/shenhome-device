@@ -7,12 +7,19 @@ WiFiManager wifi;
 UdpCom udp;
 WiFiClient espClient;
 MQTTClient mqttClient(espClient);
-bool pairingMode;
+
+bool pairingMode = false;
 char macAddress[18];
+unsigned long lastHeartbeatTime = 0;
+unsigned long lastBlinkTime = 0;
 
 void setup()
 {
   Serial.begin(115200);
+
+  // Initialize LED pin
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH); // Turn off LED
 
   // Get MAC address for pairing mode
   snprintf(macAddress, sizeof(macAddress), "%02X:%02X:%02X:%02X:%02X:%02X",
@@ -37,12 +44,21 @@ void loop()
   if (wifi.isConnected() && !pairingMode)
   {
     mqttClient.loop();
+
+    if (millis() - lastHeartbeatTime > HEARTBEAT_INTERVAL)
+    {
+      sendHeartbeat();
+      lastHeartbeatTime = millis();
+    }
   }
 
   // Handle UDP pairing mode
   if (pairingMode)
   {
     udp.receivePackets();
+    blinkLED();
+  } else {
+    digitalWrite(LED_BUILTIN, HIGH); // Turn off LED
   }
 
   delay(10);
@@ -92,11 +108,9 @@ void handleUDPPacket(const char *data, size_t length, IPAddress remoteIP, uint16
 
 void handleCommandMessage(const JsonDocument &doc)
 {
-  const char *command = doc["command"];
-  if (!command)
-  {
-    return;
-  }
+  Serial.println("Received JSON message:");
+  serializeJsonPretty(doc, Serial);
+  Serial.println();
 }
 
 void loadCredentialsFromEEPROM()
@@ -163,5 +177,34 @@ void startUDPPairingMode()
   else
   {
     Serial.println("AP failed: " + String(wifi.getLastError()));
+  }
+}
+
+void sendHeartbeat()
+{
+  if (mqttClient.isConnected())
+  {
+    JsonDocument doc;
+    doc["mac"] = macAddress;
+    doc["type"] = "Actuator";
+    JsonObject data = doc["data"].add<JsonObject>();
+    data["status"] = ENABLED;
+
+    String payload;
+    serializeJson(doc, payload);
+    if (mqttClient.publishMessage("heartbeat", payload.c_str(), true)) {
+      Serial.println("Heartbeat sent: " + payload);
+    } else {
+      Serial.println("Failed to send heartbeat: " + String(mqttClient.getLastError()));
+    }
+  }
+}
+
+void blinkLED()
+{
+  if (millis() - lastBlinkTime > BLINK_INTERVAL)
+  {
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+    lastBlinkTime = millis();
   }
 }
