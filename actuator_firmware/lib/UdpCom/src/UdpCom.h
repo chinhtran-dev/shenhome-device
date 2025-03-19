@@ -1,5 +1,5 @@
-#ifndef UDP_H
-#define UDP_H
+#ifndef UDP_COM_H
+#define UDP_COM_H
 
 #include <Arduino.h>
 #include <WiFiUdp.h>

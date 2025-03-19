@@ -1,6 +1,6 @@
 {
     "$schema": "https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/schema/library.json",
-    "name": "MqttClient",
+    "name": "MQTTClient",
     "version": "1.0.0",
     "description": "MQTT client library for ESP8266",
     "keywords": [
@@ -8,7 +8,7 @@
         "client",
         "esp8266"
     ],
-    "headers": "MqttClient.h",
+    "headers": "MQTTClient.h",
     "dependencies": [
         {
             "name": "PubSubClient",
