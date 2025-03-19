@@ -1,0 +1,25 @@
+{
+    "$schema": "https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/schema/library.json",
+    "name": "NetworkHub",
+    "version": "1.0.0",
+    "description": "Hub for network information",
+    "keywords": [
+        "network",
+        "hub",
+        "esp8266"
+    ],
+    "headers": "NetworkHub.h",
+    "dependencies": [
+        {
+            "name": "ArduinoJson",
+            "version": "^7.1.0",
+            "owner": "bblanchon"
+        }
+    ],
+    "frameworks": "arduino",
+    "platforms": "espressif8266",
+    "build": {
+        "srcDir": "src",
+        "flags": "-Wall"
+    }
+}

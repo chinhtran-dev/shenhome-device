@@ -1,0 +1,23 @@
+{
+    "$schema": "https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/schema/library.json",
+    "name": "WiFiManager",
+    "version": "1.0.0",
+    "description": "WiFi Manager library for ESP8266",
+    "keywords": [
+        "wifi",
+        "manager",
+        "esp8266"
+    ],
+    "headers": "WiFiManager.h",
+    "dependencies": [
+        {
+            "name": "NetworkHub"
+        }
+    ],
+    "frameworks": "arduino",
+    "platforms": "espressif8266",
+    "build": {
+        "srcDir": "src",
+        "flags": "-Wall"
+    }
+}
