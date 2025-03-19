@@ -1,9 +1,3 @@
-
----
-
-### README for `sensor_firmware` (`sensor_firmware/README`)
-
-```markdown
 # Sensor Firmware
 
 This firmware is designed for ESP8266-based sensor devices that periodically send data (e.g., light levels) via MQTT. It supports WiFi configuration, MQTT communication, and a reset mechanism.
