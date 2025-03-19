@@ -2,11 +2,16 @@
 #include <ArduinoJson.h>
 #include "main.h"
 
+#define SSID_TEST "Emyeucogiao"
+#define PASSWORD_TEST "hoicoemdi1227"
+#define MQTT_BROKER "192.168.2.124"
+#define MQTT_PORT 1883
+
 NetworkHub hub;
 WiFiManager wifi;
 UdpCom udp;
 WiFiClient espClient;
-MQTTClient mqttClient(espClient);
+MQTTClient mqttClient(&espClient);
 
 bool pairingMode = false;
 char macAddress[18];
@@ -31,8 +36,11 @@ void setup()
   // Initialize reset button
   pinMode(RESET_BUTTON_PIN, INPUT_PULLUP);
 
+  // Initialize toggle button
+  pinMode(TOGGLE_BUTTON_PIN, INPUT_PULLUP);
+
   // Get MAC address for pairing mode
-  snprintf(macAddress, sizeof(macAddress), "%02X:%02X:%02X:%02X:%02X:%02X",
+  snprintf(macAddress, sizeof(macAddress), "%02x:%02x:%02x:%02x:%02x:%02x",
            WiFi.macAddress()[0], WiFi.macAddress()[1], WiFi.macAddress()[2],
            WiFi.macAddress()[3], WiFi.macAddress()[4], WiFi.macAddress()[5]);
 
@@ -40,6 +48,14 @@ void setup()
   loadCredentialsFromEEPROM();
   connectWiFi();
   setupMQTT();
+
+  // if (wifi.connect(SSID_TEST, PASSWORD_TEST)) {
+  //   Serial.println("WiFi connected: " + String(wifi.getLocalIP()));
+  //   mqttClient.setup(MQTT_BROKER, MQTT_PORT);
+  //   String commandTopic = "device/" + String(macAddress) + "/command";
+  //   mqttClient.onJsonMessage(commandTopic.c_str(), handleCommandMessage);
+  //   Serial.println("MQTT connected: " + String(mqttClient.isConnected()));
+  // }
 
   // If not connected, start UDP pairing mode
   if (!wifi.isConnected() || !mqttClient.isConnected())
@@ -55,6 +71,10 @@ void loop()
   if (wifi.isConnected() && !pairingMode)
   {
     mqttClient.loop();
+
+    if (String(mqttClient.getLastError()) != "No error") {
+      Serial.println("MQTT error " + String(mqttClient.getLastError()));
+    }
 
     if (millis() - lastHeartbeatTime > HEARTBEAT_INTERVAL)
     {
@@ -254,8 +274,20 @@ void handleCommandMessage(const JsonDocument &doc)
 {
   Serial.println("Received JSON message:");
   serializeJsonPretty(doc, Serial);
+  String command = doc["status"];
 
-  MQTTPayload command = MQTTPayload::deserializeEntity(doc);
+  if (command == ENABLED)
+  {
+    ledState = true;
+  }
+  else if (command == DISABLED)
+  {
+    ledState = false;
+  }
+  else
+  {
+    Serial.println("Invalid command: " + command);
+  }
 }
 
 void loadCredentialsFromEEPROM()

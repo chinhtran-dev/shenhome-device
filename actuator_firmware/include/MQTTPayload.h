@@ -13,11 +13,6 @@ private:
 public:
   MQTTPayload(const String& macAddress, const String& deviceType, JsonDocument& doc);
   String toJsonString() const;
-  static MQTTPayload deserializeEntity(const JsonDocument& doc);
-
-  String getMac() const { return mac; }
-  String getType() const { return type; }
-  JsonObject getData() const { return data; }
 };
 
 #endif

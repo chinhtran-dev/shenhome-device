@@ -2,12 +2,13 @@
 #include <string.h>
 
 // Constructor
-MQTTClient::MQTTClient(WiFiClient& espClient) 
-    : client(espClient), handlerCount(0), mqttUser(nullptr), mqttPass(nullptr) {
+MQTTClient::MQTTClient(WiFiClient* espClient) 
+    : client(*espClient), handlerCount(0), mqttUser(nullptr), mqttPass(nullptr) {
     for (uint8_t i = 0; i < MQTT_MAX_TOPICS; i++) {
         topicHandlers[i].active = false;
         topicHandlers[i].jsonCallback = nullptr;
         topicHandlers[i].rawCallback = nullptr;
+        memset(topicHandlers[i].topic, 0, sizeof(topicHandlers[i].topic));
     }
     strcpy(lastError, "No error");
     client.setCallback([this](char* topic, byte* payload, unsigned int length) {
@@ -34,6 +35,7 @@ bool MQTTClient::setup(const char* host,
         strcpy(lastError, "Initial connection failed");
         return false;
     }
+
     return true;
 }
 
@@ -53,14 +55,19 @@ bool MQTTClient::onJsonMessage(const char* topic, JsonCallback callback) {
     // Find or add handler
     for (uint8_t i = 0; i < MQTT_MAX_TOPICS; i++) {
         if (!topicHandlers[i].active) {
-            strncpy(topicHandlers[i].topic, topic, sizeof(topicHandlers[i].topic) - 1);
-            topicHandlers[i].topic[sizeof(topicHandlers[i].topic) - 1] = '\0';  // Ensure null-terminated
+            strncpy(topicHandlers[i].topic, topic, sizeof(topicHandlers[i].topic));
+            topicHandlers[i].topic[sizeof(topicHandlers[i].topic) - 1] = '\0';            
             topicHandlers[i].jsonCallback = callback;
             topicHandlers[i].rawCallback = nullptr;
             topicHandlers[i].active = true;
             handlerCount++;
+
+            Serial.println(String(topicHandlers[i].topic));
             if (client.connected()) {
-                client.subscribe(topic);
+                if(client.subscribe(topic)) {
+                    Serial.print("Subscribing to topic: ");
+                    Serial.println(topic);
+                };
             }
             return true;
         }
@@ -77,8 +84,7 @@ bool MQTTClient::onRawMessage(const char* topic, RawCallback callback) {
     
     for (uint8_t i = 0; i < MQTT_MAX_TOPICS; i++) {
         if (!topicHandlers[i].active) {
-            strncpy(topicHandlers[i].topic, topic, sizeof(topicHandlers[i].topic) - 1);
-            topicHandlers[i].topic[sizeof(topicHandlers[i].topic) - 1] = '\0';
+            strncpy(topicHandlers[i].topic, topic, sizeof(topicHandlers[i].topic));
             topicHandlers[i].rawCallback = callback;
             topicHandlers[i].jsonCallback = nullptr;
             topicHandlers[i].active = true;
@@ -150,13 +156,17 @@ void MQTTClient::messageReceived(char* topic, byte* payload, unsigned int length
 
     // Find matching handler
     for (uint8_t i = 0; i < MQTT_MAX_TOPICS; i++) {
-        if (topicHandlers[i].active && strcmp(topicHandlers[i].topic, topic) == 0) {
+        Serial.println("Checking topic: " + String(topicHandlers[i].topic));
+        Serial.println("Checking against: " + String(topic));
+        if (strcmp(topicHandlers[i].topic, topic) == 0) {
+            Serial.println("Found matching handler");
             // Call raw callback if set
             if (topicHandlers[i].rawCallback) {
                 topicHandlers[i].rawCallback(topic, safePayload, length);
             }
             // Call JSON callback if set
             if (topicHandlers[i].jsonCallback) {
+                Serial.println("Calling JSON callback");
                 DeserializationError error = deserializeJson(jsonDoc, safePayload);
                 if (!error) {
                     topicHandlers[i].jsonCallback(jsonDoc);

@@ -16,6 +16,7 @@ void handleUDPPacket(const char* data, size_t length, IPAddress remoteIP, uint16
 void stopPairingMode();
 void sendMacAddressViaMQTT();
 void sendHeartbeat();
+void handleCommandMessage(const JsonDocument &doc);
 void loadCredentialsFromEEPROM();
 void connectWiFi();
 bool setupMQTT();

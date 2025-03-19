@@ -16,7 +16,7 @@ class MQTTClient {
 private:
     PubSubClient client;
     struct TopicHandler {
-        char topic[32];  // Fixed-size topic string
+        char topic[64];  // Fixed-size topic string
         JsonCallback jsonCallback;
         RawCallback rawCallback;
         bool active;
@@ -30,7 +30,7 @@ private:
     void messageReceived(char* topic, byte* payload, unsigned int length);
 
 public:
-    MQTTClient(WiFiClient& espClient);  // Changed to reference
+    MQTTClient(WiFiClient* espClient);  // Changed to reference
     ~MQTTClient();  // Destructor to clean up
 
     bool setup(const char* host, 
