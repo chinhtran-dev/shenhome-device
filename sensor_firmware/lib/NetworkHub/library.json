@@ -1,20 +1,15 @@
 {
     "$schema": "https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/schema/library.json",
-    "name": "MQTTClient",
+    "name": "NetworkHub",
     "version": "1.0.0",
-    "description": "MQTT client library for ESP8266",
+    "description": "Hub for network information",
     "keywords": [
-        "mqtt",
-        "client",
+        "network",
+        "hub",
         "esp8266"
     ],
-    "headers": "MQTTClient.h",
+    "headers": "NetworkHub.h",
     "dependencies": [
-        {
-            "name": "PubSubClient",
-            "version": "^2.8",
-            "owner": "knolleary"
-        },
         {
             "name": "ArduinoJson",
             "version": "^7.1.0",

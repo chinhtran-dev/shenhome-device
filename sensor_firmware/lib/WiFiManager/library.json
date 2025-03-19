@@ -1,24 +1,17 @@
 {
     "$schema": "https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/schema/library.json",
-    "name": "MQTTClient",
+    "name": "WiFiManager",
     "version": "1.0.0",
-    "description": "MQTT client library for ESP8266",
+    "description": "WiFi Manager library for ESP8266",
     "keywords": [
-        "mqtt",
-        "client",
+        "wifi",
+        "manager",
         "esp8266"
     ],
-    "headers": "MQTTClient.h",
+    "headers": "WiFiManager.h",
     "dependencies": [
         {
-            "name": "PubSubClient",
-            "version": "^2.8",
-            "owner": "knolleary"
-        },
-        {
-            "name": "ArduinoJson",
-            "version": "^7.1.0",
-            "owner": "bblanchon"
+            "name": "NetworkHub"
         }
     ],
     "frameworks": "arduino",
