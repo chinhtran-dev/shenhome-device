@@ -1,5 +1,3 @@
-#include <Arduino.h>
-#include <ArduinoJson.h>
 #include "main.h"
 
 #define SSID_TEST "Emyeucogiao"

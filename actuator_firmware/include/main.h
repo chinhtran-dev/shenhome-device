@@ -2,6 +2,7 @@
 #define MAIN_H
 
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include <WiFiManager.h>
 #include <NetworkHub.h>
 #include <MQTTClient.h>
